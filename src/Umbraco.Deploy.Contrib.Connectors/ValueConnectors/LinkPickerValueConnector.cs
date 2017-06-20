@@ -34,30 +34,21 @@ namespace Umbraco.Deploy.ValueConnectors
         /// <inheritdoc/>
         public string GetValue(Property property, ICollection<ArtifactDependency> dependencies)
         {
-			_logger.Info(GetType(), "Link Picker Connector Getting value");
-
 			var svalue = property?.Value as string;
-			_logger.Info(GetType(), "Link Picker Connector Getting svalue: " + svalue);
-			_logger.Info(GetType(), "Link Picker Connector Getting Alias: " + property.Alias);
 
 			if (string.IsNullOrWhiteSpace(svalue))
                 return string.Empty;
 
             var linkPickerData = JsonConvert.DeserializeObject<LinkPickerModel>(svalue);
 
-			_logger.Info(GetType(), linkPickerData.Id.ToString());
-
 			// If the contentId/mediaId of the TypeData is set try get the GuidUdi for the content/media and
 			// mark it as a dependency we need to deploy.
 			// We need the Guid for the content/media because the integer value could be different in the different environments.
 			if (TryGetGuidUdi(linkPickerData.Id, UmbracoObjectTypes.Document, Constants.UdiEntityType.Document, out GuidUdi contentGuidUdi))
 			{
-				_logger.Info(GetType(), "Link Picker Connector Getting value");
 
 				dependencies.Add(new ArtifactDependency(contentGuidUdi, false, ArtifactDependencyMode.Exist));
 				linkPickerData.Id = contentGuidUdi.Guid;
-
-				_logger.Info(GetType(), contentGuidUdi.Guid.ToString());
 			}
 
 			return JsonConvert.SerializeObject(linkPickerData);
@@ -66,8 +57,6 @@ namespace Umbraco.Deploy.ValueConnectors
         /// <inheritdoc/>
         public void SetValue(IContentBase content, string alias, string value)
         {
-			_logger.Info(GetType(), "Link Picker Connector Setting value: " + value);
-
 			if (string.IsNullOrWhiteSpace(value))
             {
                 content.SetValue(alias, value);
@@ -76,18 +65,13 @@ namespace Umbraco.Deploy.ValueConnectors
 
             var linkPickerData = JsonConvert.DeserializeObject<LinkPickerModel>(value);
 
-			_logger.Info(GetType(), linkPickerData.Id.ToString());
-
 			// When we set the value we want to switch the Guid value of the contentId/mediaId to the integervalue
 			// as this is what the UrlPicker uses to lookup it's content/media
 			if (TryGetId(linkPickerData.Id, UmbracoObjectTypes.Document, out int contentId))
 			{
-				_logger.Info(GetType(), "Link Picker Connector Setting got ID: " + contentId);
 				linkPickerData.Id = contentId;
 			}
 
-			_logger.Info(GetType(), "Link Picker Connector Setting - serialized linkPickerData: " + JsonConvert.SerializeObject(linkPickerData));
-			_logger.Info(GetType(), "Link Picker Connector Setting alias: " + alias);
 			content.SetValue(alias, JsonConvert.SerializeObject(linkPickerData));
         }
 
